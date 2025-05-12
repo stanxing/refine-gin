@@ -47,15 +47,13 @@ func (p *DefaultDTOProvider) GetCreateDTO() interface{} {
 }
 
 func (p *DefaultDTOProvider) GetUpdateDTO() interface{} {
+	// https://gorm.io/docs/update.html#Updates-multiple-columns
+	// Updates supports updating with struct or map[string]interface{}, so we will use map[string]interface{}{} as default type
 	if p.UpdateDTO != nil {
 		return reflect.New(reflect.TypeOf(p.UpdateDTO).Elem()).Interface()
 	}
 
-	modelType := reflect.TypeOf(p.Model)
-	if modelType.Kind() == reflect.Ptr {
-		modelType = modelType.Elem()
-	}
-	return reflect.New(modelType).Interface()
+	return map[string]interface{}{}
 }
 
 func (p *DefaultDTOProvider) GetResponseDTO() interface{} {

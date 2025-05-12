@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -129,67 +128,18 @@ func (r *GenericRepository) Create(ctx context.Context, data interface{}) (inter
 
 // Update modifies an existing resource identified by ID
 func (r *GenericRepository) Update(ctx context.Context, id interface{}, data interface{}) (interface{}, error) {
-	// Try to set ID directly on model if it implements IDSetter
-	TrySetID(data, id)
-
 	// First, get the existing record
-	existingRecord, err := r.Get(ctx, id)
+	_, err := r.Get(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-
-	// Check if data is a map or a struct
-	isMap := false
-	updateData := data
-	if _, ok := data.(map[string]interface{}); ok {
-		isMap = true
+	// Handle pointer case
+	value := reflect.ValueOf(data)
+	if value.Kind() == reflect.Ptr {
+		value = value.Elem()
+		data = value.Interface()
 	}
-
-	// If data is a map, we need to convert it to the model's struct type for Save to work properly
-	if isMap {
-		// Create a new instance of the model type to contain our updates
-		modelType := reflect.TypeOf(r.Model)
-		if modelType.Kind() == reflect.Ptr {
-			// If the model is a pointer, create a new pointer to the element type
-			modelValue := reflect.New(modelType.Elem())
-			updateData = modelValue.Interface()
-		} else {
-			// If the model is not a pointer, create a new pointer to the model type
-			modelValue := reflect.New(modelType)
-			updateData = modelValue.Interface()
-		}
-
-		// Convert the existing record to JSON
-		jsonData, err := json.Marshal(existingRecord)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal existing record: %w", err)
-		}
-
-		// Unmarshal the JSON into the new model instance to initialize it with existing values
-		if err := json.Unmarshal(jsonData, updateData); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal existing record: %w", err)
-		}
-
-		// Now apply the updates from the data map to the model
-		updatesMap, _ := data.(map[string]interface{})
-		updatesJSON, err := json.Marshal(updatesMap)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal updates: %w", err)
-		}
-
-		// This will only update the fields present in the JSON
-		if err := json.Unmarshal(updatesJSON, updateData); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal updates: %w", err)
-		}
-	}
-
-	// Ensure ID field is set correctly in the update data
-	if idSetter, ok := updateData.(IDSetter); ok {
-		idSetter.SetID(id)
-	}
-
-	// Save the modified record - this will correctly handle JSON serialization
-	if err := r.DB.WithContext(ctx).Save(updateData).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Model(r.Model).Where("id = ?", id).Updates(data).Error; err != nil {
 		return nil, err
 	}
 

@@ -77,36 +77,22 @@ func GenerateUpdateHandler(res resource.Resource, repo repository.Repository, dt
 			return
 		}
 
-		// Transform DTO to model
-		model, err := dtoProvider.TransformToModel(dtoInstance)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		// TODO: do some validate
 
-		// Filter out read-only fields from the model
-		model = resource.FilterOutReadOnlyFields(model, res)
-
-		// Validate nested JSON fields if present
-		if err := validateNestedJsonFields(res, model); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "JSON validation failed: " + err.Error()})
-			return
-		}
-
-		// Get the database connection from repository
-		db := repo.Query(c.Request.Context())
-
-		// Validate relations (if any) - only perform if repository has DB access
-		if db != nil && len(res.GetRelations()) > 0 {
-			// Validate relations
-			if err := resource.ValidateRelations(db, model); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Relation validation failed: " + err.Error()})
-				return
-			}
-		}
+		// TODO: ValidateRelations
+		// // Get the database connection from repository
+		// db := repo.Query(c.Request.Context())
+		// // Validate relations (if any) - only perform if repository has DB access
+		// if db != nil && len(res.GetRelations()) > 0 {
+		// 	// Validate relations
+		// 	if err := resource.ValidateRelations(db); err != nil {
+		// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Relation validation failed: " + err.Error()})
+		// 		return
+		// 	}
+		// }
 
 		// Call repository
-		updatedModel, err := repo.Update(c.Request.Context(), id, model)
+		updatedModel, err := repo.Update(c.Request.Context(), id, dtoInstance)
 		if err != nil {
 			// Check if it's a "not found" error
 			if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "no rows") {
