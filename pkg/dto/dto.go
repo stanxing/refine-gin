@@ -53,7 +53,7 @@ func (p *DefaultDTOProvider) GetUpdateDTO() interface{} {
 		return reflect.New(reflect.TypeOf(p.UpdateDTO).Elem()).Interface()
 	}
 
-	return map[string]interface{}{}
+	return &map[string]interface{}{}
 }
 
 func (p *DefaultDTOProvider) GetResponseDTO() interface{} {
