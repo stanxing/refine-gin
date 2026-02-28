@@ -18,6 +18,12 @@ type Repository interface {
 
 	// Bulk operations
 	Count(ctx context.Context, options query.QueryOptions) (int64, error)
+	// ApproximateCount returns a fast approximate row count for the table.
+	// It uses database statistics (pg_class for PostgreSQL, information_schema for MySQL)
+	// and falls back to exact COUNT for unsupported databases (e.g. SQLite).
+	// Use this instead of Count on large tables where performance matters and
+	// exact precision is not required.
+	ApproximateCount(ctx context.Context) (int64, error)
 	CreateMany(ctx context.Context, data interface{}) (interface{}, error)
 	UpdateMany(ctx context.Context, ids []interface{}, data interface{}) (int64, error)
 	DeleteMany(ctx context.Context, ids []interface{}) (int64, error)

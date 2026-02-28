@@ -763,6 +763,12 @@ func (r *OwnerGenericRepository) Count(ctx context.Context, options query.QueryO
 	return total, err
 }
 
+// ApproximateCount falls back to exact Count with owner filter applied,
+// because database statistics are table-wide and cannot reflect per-owner subsets.
+func (r *OwnerGenericRepository) ApproximateCount(ctx context.Context) (int64, error) {
+	return r.Count(ctx, query.QueryOptions{})
+}
+
 // CreateMany inserts multiple resources and sets ownership on all
 func (r *OwnerGenericRepository) CreateMany(ctx context.Context, data interface{}) (interface{}, error) {
 	// Set owner field on all records

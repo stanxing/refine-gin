@@ -119,6 +119,11 @@ func (m *MockRepository) GetIDFieldName() string {
 	return args.String(0)
 }
 
+func (m *MockRepository) ApproximateCount(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 // MockResource is a mock implementation of resource.Resource for testing
 type MockResource struct {
 	mock.Mock
