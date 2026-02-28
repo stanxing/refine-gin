@@ -27,6 +27,10 @@ type QueryOptions struct {
 	// Disable pagination for count operations
 	DisablePagination bool
 
+	// UseApproximateCount uses fast approximate row count (pg_class / information_schema)
+	// instead of exact COUNT(*). Suitable for large tables where precision is not required.
+	UseApproximateCount bool
+
 	// Search parameters
 	Search string
 

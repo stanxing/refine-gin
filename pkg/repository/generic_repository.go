@@ -72,8 +72,16 @@ func (r *GenericRepository) List(ctx context.Context, options query.QueryOptions
 
 	// Get total count before pagination
 	var total int64
-	if err := tx.Model(r.Model).Count(&total).Error; err != nil {
-		return nil, 0, err
+	if options.UseApproximateCount {
+		var err error
+		total, err = r.ApproximateCount(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		if err := tx.Model(r.Model).Count(&total).Error; err != nil {
+			return nil, 0, err
+		}
 	}
 
 	// Apply pagination if enabled
@@ -181,6 +189,36 @@ func (r *GenericRepository) Count(ctx context.Context, options query.QueryOption
 	}
 
 	return total, nil
+}
+
+// ApproximateCount returns a fast approximate row count using database statistics.
+// For PostgreSQL it reads pg_class.reltuples, for MySQL it reads information_schema.TABLES.
+// Falls back to exact COUNT(*) for SQLite and other unsupported dialects.
+func (r *GenericRepository) ApproximateCount(ctx context.Context) (int64, error) {
+	stmt := &gorm.Statement{DB: r.DB}
+	if err := stmt.Parse(r.Model); err != nil {
+		return 0, err
+	}
+	tableName := stmt.Table
+
+	var count int64
+	switch r.DB.Dialector.Name() {
+	case "postgres":
+		if err := r.DB.WithContext(ctx).
+			Raw("SELECT reltuples::bigint FROM pg_class WHERE relname = ?", tableName).
+			Scan(&count).Error; err != nil {
+			return 0, err
+		}
+	case "mysql":
+		if err := r.DB.WithContext(ctx).
+			Raw("SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", tableName).
+			Scan(&count).Error; err != nil {
+			return 0, err
+		}
+	default:
+		return r.Count(ctx, query.QueryOptions{})
+	}
+	return count, nil
 }
 
 // CreateMany inserts multiple resources in a single transaction
@@ -326,8 +364,16 @@ func (r *GenericRepository) ListWithRelations(ctx context.Context, options query
 
 	// Get total count before pagination
 	var total int64
-	if err := tx.Model(r.Model).Count(&total).Error; err != nil {
-		return nil, 0, err
+	if options.UseApproximateCount {
+		var err error
+		total, err = r.ApproximateCount(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		if err := tx.Model(r.Model).Count(&total).Error; err != nil {
+			return nil, 0, err
+		}
 	}
 
 	// Apply pagination if enabled
