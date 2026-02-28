@@ -91,6 +91,9 @@ func NewQueryOptions(c *gin.Context, res resource.Resource) QueryOptions {
 		}
 	}
 
+	// Read approximate count setting from resource configuration
+	opt.UseApproximateCount = res.GetUseApproximateCount()
+
 	// Parse search
 	opt.Search = c.DefaultQuery("q", "")
 

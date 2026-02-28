@@ -407,9 +407,6 @@ func (r *ProductRepository) GetIDFieldName() string {
 	return "Code" // Primary key field for Product model
 }
 
-func (r *ProductRepository) ApproximateCount(ctx context.Context) (int64, error) {
-	return r.Count(ctx, query.QueryOptions{})
-}
 
 func main() {
 	// Create a new Gin router

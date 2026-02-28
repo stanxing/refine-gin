@@ -74,7 +74,7 @@ func (r *GenericRepository) List(ctx context.Context, options query.QueryOptions
 	var total int64
 	if options.UseApproximateCount {
 		var err error
-		total, err = r.ApproximateCount(ctx)
+		total, err = r.approximateCount(ctx)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -176,8 +176,14 @@ func (r *GenericRepository) Delete(ctx context.Context, id interface{}) error {
 	return tx.Where(idColumnName+" = ?", id).Delete(r.Model).Error
 }
 
-// Count returns the total number of resources matching the query options
+// Count returns the total number of resources matching the query options.
+// When options.UseApproximateCount is true, it uses database statistics for a faster
+// but potentially imprecise count (ignores filters).
 func (r *GenericRepository) Count(ctx context.Context, options query.QueryOptions) (int64, error) {
+	if options.UseApproximateCount {
+		return r.approximateCount(ctx)
+	}
+
 	var total int64
 	tx := r.DB.WithContext(ctx).Model(r.Model)
 
@@ -191,10 +197,10 @@ func (r *GenericRepository) Count(ctx context.Context, options query.QueryOption
 	return total, nil
 }
 
-// ApproximateCount returns a fast approximate row count using database statistics.
+// approximateCount returns a fast approximate row count using database statistics.
 // For PostgreSQL it reads pg_class.reltuples, for MySQL it reads information_schema.TABLES.
 // Falls back to exact COUNT(*) for SQLite and other unsupported dialects.
-func (r *GenericRepository) ApproximateCount(ctx context.Context) (int64, error) {
+func (r *GenericRepository) approximateCount(ctx context.Context) (int64, error) {
 	stmt := &gorm.Statement{DB: r.DB}
 	if err := stmt.Parse(r.Model); err != nil {
 		return 0, err
@@ -216,7 +222,9 @@ func (r *GenericRepository) ApproximateCount(ctx context.Context) (int64, error)
 			return 0, err
 		}
 	default:
-		return r.Count(ctx, query.QueryOptions{})
+		if err := r.DB.WithContext(ctx).Model(r.Model).Count(&count).Error; err != nil {
+			return 0, err
+		}
 	}
 	return count, nil
 }
@@ -366,7 +374,7 @@ func (r *GenericRepository) ListWithRelations(ctx context.Context, options query
 	var total int64
 	if options.UseApproximateCount {
 		var err error
-		total, err = r.ApproximateCount(ctx)
+		total, err = r.approximateCount(ctx)
 		if err != nil {
 			return nil, 0, err
 		}

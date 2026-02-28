@@ -154,6 +154,8 @@ func (m *FormMockResource) GetFormLayout() *resource.FormLayout {
 	return args.Get(0).(*resource.FormLayout)
 }
 
+func (m *FormMockResource) GetUseApproximateCount() bool { return false }
+
 // FormTestModel is a sample model for testing
 type FormTestModel struct {
 	ID        uint   `json:"id"`

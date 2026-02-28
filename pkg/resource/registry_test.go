@@ -113,6 +113,8 @@ func (r *RegistryMockResource) GetFormLayout() *FormLayout {
 	return nil
 }
 
+func (r *RegistryMockResource) GetUseApproximateCount() bool { return false }
+
 // TestResourceRegistry tests the ResourceRegistry and GlobalResourceRegistry
 func TestResourceRegistry(t *testing.T) {
 	// Reset GlobalResourceRegistry for testing

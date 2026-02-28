@@ -135,6 +135,8 @@ func (m *MockResource) GetFormLayout() *FormLayout {
 	return nil
 }
 
+func (m *MockResource) GetUseApproximateCount() bool { return false }
+
 // TestModels for relation tests
 type User struct {
 	ID      string   `json:"id" gorm:"primaryKey"`
