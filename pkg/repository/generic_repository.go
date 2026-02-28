@@ -70,9 +70,11 @@ func (r *GenericRepository) List(ctx context.Context, options query.QueryOptions
 	// Apply query options (filters, sorting, etc.)
 	tx = options.Apply(tx)
 
-	// Get total count before pagination
+	// Get total count before pagination.
+	// Fall back to exact count when filters are active, as approximate statistics
+	// are table-wide and cannot reflect filtered subsets.
 	var total int64
-	if options.UseApproximateCount {
+	if options.UseApproximateCount && !options.HasFilters() {
 		var err error
 		total, err = r.approximateCount(ctx)
 		if err != nil {
@@ -180,7 +182,7 @@ func (r *GenericRepository) Delete(ctx context.Context, id interface{}) error {
 // When options.UseApproximateCount is true, it uses database statistics for a faster
 // but potentially imprecise count (ignores filters).
 func (r *GenericRepository) Count(ctx context.Context, options query.QueryOptions) (int64, error) {
-	if options.UseApproximateCount {
+	if options.UseApproximateCount && !options.HasFilters() {
 		return r.approximateCount(ctx)
 	}
 
@@ -370,9 +372,11 @@ func (r *GenericRepository) ListWithRelations(ctx context.Context, options query
 	// Apply query options (filters, sorting, etc.)
 	tx = options.Apply(tx)
 
-	// Get total count before pagination
+	// Get total count before pagination.
+	// Fall back to exact count when filters are active, as approximate statistics
+	// are table-wide and cannot reflect filtered subsets.
 	var total int64
-	if options.UseApproximateCount {
+	if options.UseApproximateCount && !options.HasFilters() {
 		var err error
 		total, err = r.approximateCount(ctx)
 		if err != nil {

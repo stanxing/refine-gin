@@ -212,3 +212,9 @@ func NewQueryOptions(c *gin.Context, res resource.Resource) QueryOptions {
 
 	return opt
 }
+
+// HasFilters returns true if any filter conditions are set,
+// meaning approximate count should not be used.
+func (o QueryOptions) HasFilters() bool {
+	return len(o.Filters) > 0 || len(o.AdvancedFilters) > 0 || o.Search != ""
+}
