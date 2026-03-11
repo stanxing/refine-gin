@@ -80,6 +80,8 @@ func (m MockResource) GetFormLayout() *resource.FormLayout {
 	return nil
 }
 
+func (m MockResource) GetUseApproximateCount() bool { return false }
+
 func TestDefaultSwaggerInfo(t *testing.T) {
 	info := DefaultSwaggerInfo()
 

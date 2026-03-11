@@ -282,6 +282,8 @@ func (r *MockResource) GetFormLayout() *resource.FormLayout {
 	return args.Get(0).(*resource.FormLayout)
 }
 
+func (m *MockResource) GetUseApproximateCount() bool { return false }
+
 func TestRegisterResourceForRefineWithRelations(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()

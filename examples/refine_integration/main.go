@@ -407,6 +407,7 @@ func (r *ProductRepository) GetIDFieldName() string {
 	return "Code" // Primary key field for Product model
 }
 
+
 func main() {
 	// Create a new Gin router
 	r := gin.Default()

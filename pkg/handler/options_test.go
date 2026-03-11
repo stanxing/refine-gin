@@ -182,6 +182,8 @@ func (m *OptionsMockResource) GetFormLayout() *resource.FormLayout {
 	return args.Get(0).(*resource.FormLayout)
 }
 
+func (m *OptionsMockResource) GetUseApproximateCount() bool { return false }
+
 func TestGenerateOptionsHandler(t *testing.T) {
 	// Setup
 	gin.SetMode(gin.TestMode)

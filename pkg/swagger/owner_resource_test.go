@@ -195,6 +195,8 @@ func (m *MockOwnerResource) GetFormLayout() *resource.FormLayout {
 	return nil
 }
 
+func (m *MockOwnerResource) GetUseApproximateCount() bool { return false }
+
 // TestRegisterOwnerResourceSwagger tests the RegisterOwnerResourceSwagger function
 func TestRegisterOwnerResourceSwagger(t *testing.T) {
 	// Create mock owner resource

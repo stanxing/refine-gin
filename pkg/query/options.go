@@ -27,6 +27,10 @@ type QueryOptions struct {
 	// Disable pagination for count operations
 	DisablePagination bool
 
+	// UseApproximateCount uses fast approximate row count (pg_class / information_schema)
+	// instead of exact COUNT(*). Suitable for large tables where precision is not required.
+	UseApproximateCount bool
+
 	// Search parameters
 	Search string
 
@@ -86,6 +90,9 @@ func NewQueryOptions(c *gin.Context, res resource.Resource) QueryOptions {
 			opt.PerPage = perPageInt
 		}
 	}
+
+	// Read approximate count setting from resource configuration
+	opt.UseApproximateCount = res.GetUseApproximateCount()
 
 	// Parse search
 	opt.Search = c.DefaultQuery("q", "")
@@ -204,4 +211,10 @@ func NewQueryOptions(c *gin.Context, res resource.Resource) QueryOptions {
 	}
 
 	return opt
+}
+
+// HasFilters returns true if any filter conditions are set,
+// meaning approximate count should not be used.
+func (o QueryOptions) HasFilters() bool {
+	return len(o.Filters) > 0 || len(o.AdvancedFilters) > 0 || o.Search != ""
 }

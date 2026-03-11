@@ -467,7 +467,6 @@ func (r *OwnerGenericRepository) Update(ctx context.Context, id interface{}, dat
 		err = r.DB.Model(r.Model).
 			Where(fmt.Sprintf("%s = ?", idColumnName), id).
 			Select("1").Limit(1).Find(&recordExists).Error
-
 		if err != nil {
 			fmt.Printf("[DEBUG-REPO] Error checking if record exists: %v\n", err)
 			return nil, err
@@ -743,7 +742,8 @@ func (r *OwnerGenericRepository) Delete(ctx context.Context, id interface{}) err
 		Delete(r.Model).Error
 }
 
-// Count returns the total number of resources filtered by owner
+// Count returns the total number of resources filtered by owner.
+// DO NOT support options.UseApproximateCount
 func (r *OwnerGenericRepository) Count(ctx context.Context, options query.QueryOptions) (int64, error) {
 	// Apply owner filter to DB
 	tx := r.DB.WithContext(ctx)

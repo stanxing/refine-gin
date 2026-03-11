@@ -144,6 +144,8 @@ func (m *MetadataMockResource) GetFormFields() []string {
 	return args.Get(0).([]string)
 }
 
+func (m *MetadataMockResource) GetUseApproximateCount() bool { return false }
+
 func TestGenerateResourceMetadata(t *testing.T) {
 	// Create a sample resource
 	fields := []Field{

@@ -70,10 +70,20 @@ func (r *GenericRepository) List(ctx context.Context, options query.QueryOptions
 	// Apply query options (filters, sorting, etc.)
 	tx = options.Apply(tx)
 
-	// Get total count before pagination
+	// Get total count before pagination.
+	// Fall back to exact count when filters are active, as approximate statistics
+	// are table-wide and cannot reflect filtered subsets.
 	var total int64
-	if err := tx.Model(r.Model).Count(&total).Error; err != nil {
-		return nil, 0, err
+	if options.UseApproximateCount && !options.HasFilters() {
+		var err error
+		total, err = r.approximateCount(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		if err := tx.Model(r.Model).Count(&total).Error; err != nil {
+			return nil, 0, err
+		}
 	}
 
 	// Apply pagination if enabled
@@ -168,8 +178,14 @@ func (r *GenericRepository) Delete(ctx context.Context, id interface{}) error {
 	return tx.Where(idColumnName+" = ?", id).Delete(r.Model).Error
 }
 
-// Count returns the total number of resources matching the query options
+// Count returns the total number of resources matching the query options.
+// When options.UseApproximateCount is true, it uses database statistics for a faster
+// but potentially imprecise count (ignores filters).
 func (r *GenericRepository) Count(ctx context.Context, options query.QueryOptions) (int64, error) {
+	if options.UseApproximateCount && !options.HasFilters() {
+		return r.approximateCount(ctx)
+	}
+
 	var total int64
 	tx := r.DB.WithContext(ctx).Model(r.Model)
 
@@ -181,6 +197,38 @@ func (r *GenericRepository) Count(ctx context.Context, options query.QueryOption
 	}
 
 	return total, nil
+}
+
+// approximateCount returns a fast approximate row count using database statistics.
+// For PostgreSQL it reads pg_class.reltuples, for MySQL it reads information_schema.TABLES.
+// Falls back to exact COUNT(*) for SQLite and other unsupported dialects.
+func (r *GenericRepository) approximateCount(ctx context.Context) (int64, error) {
+	stmt := &gorm.Statement{DB: r.DB}
+	if err := stmt.Parse(r.Model); err != nil {
+		return 0, err
+	}
+	tableName := stmt.Table
+
+	var count int64
+	switch r.DB.Dialector.Name() {
+	case "postgres":
+		if err := r.DB.WithContext(ctx).
+			Raw("SELECT reltuples::bigint FROM pg_class WHERE relname = ?", tableName).
+			Scan(&count).Error; err != nil {
+			return 0, err
+		}
+	case "mysql":
+		if err := r.DB.WithContext(ctx).
+			Raw("SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?", tableName).
+			Scan(&count).Error; err != nil {
+			return 0, err
+		}
+	default:
+		if err := r.DB.WithContext(ctx).Model(r.Model).Count(&count).Error; err != nil {
+			return 0, err
+		}
+	}
+	return count, nil
 }
 
 // CreateMany inserts multiple resources in a single transaction
@@ -324,10 +372,20 @@ func (r *GenericRepository) ListWithRelations(ctx context.Context, options query
 	// Apply query options (filters, sorting, etc.)
 	tx = options.Apply(tx)
 
-	// Get total count before pagination
+	// Get total count before pagination.
+	// Fall back to exact count when filters are active, as approximate statistics
+	// are table-wide and cannot reflect filtered subsets.
 	var total int64
-	if err := tx.Model(r.Model).Count(&total).Error; err != nil {
-		return nil, 0, err
+	if options.UseApproximateCount && !options.HasFilters() {
+		var err error
+		total, err = r.approximateCount(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+	} else {
+		if err := tx.Model(r.Model).Count(&total).Error; err != nil {
+			return nil, 0, err
+		}
 	}
 
 	// Apply pagination if enabled

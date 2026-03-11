@@ -169,6 +169,8 @@ func (m *MockResourceForTest) GetFormLayout() *resource.FormLayout {
 	return nil
 }
 
+func (m *MockResourceForTest) GetUseApproximateCount() bool { return false }
+
 func TestAttachAndDetachActions(t *testing.T) {
 	// Test the attachment action
 	t.Run("AttachAction", func(t *testing.T) {

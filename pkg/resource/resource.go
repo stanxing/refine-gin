@@ -57,6 +57,9 @@ type Resource interface {
 	GetPermissions() map[string][]string
 	HasPermission(operation string, role string) bool
 
+	// GetUseApproximateCount returns whether to use approximate count for list pagination
+	GetUseApproximateCount() bool
+
 	// Returns form layout configuration
 	GetFormLayout() *FormLayout
 }
@@ -75,6 +78,9 @@ type ResourceConfig struct {
 	Relations   []Relation
 	IDFieldName string              // Nazwa pola identyfikatora (domyślnie "ID")
 	Permissions map[string][]string // Map of operations to roles with permission
+
+	// UseApproximateCount uses fast approximate row count for list pagination
+	UseApproximateCount bool
 
 	// Field lists for different purposes
 	FilterableFields []string
@@ -101,6 +107,9 @@ type DefaultResource struct {
 	Relations   []Relation
 	IDFieldName string              // Nazwa pola identyfikatora (domyślnie "ID")
 	Permissions map[string][]string // Map of operations to roles with permission
+
+	// UseApproximateCount uses fast approximate row count for list pagination
+	UseApproximateCount bool
 
 	// Field lists for different purposes
 	FilterableFields []string
@@ -260,6 +269,8 @@ func NewResource(config ResourceConfig) Resource {
 		Relations:   relations,
 		IDFieldName: config.IDFieldName,
 		Permissions: config.Permissions,
+
+		UseApproximateCount: config.UseApproximateCount,
 
 		// Field lists
 		FilterableFields: filterableFields,
@@ -765,4 +776,9 @@ func (r *DefaultResource) HasPermission(operation string, role string) bool {
 // GetFormLayout returns the form layout configuration
 func (r *DefaultResource) GetFormLayout() *FormLayout {
 	return r.FormLayout
+}
+
+// GetUseApproximateCount returns whether to use approximate count for list pagination
+func (r *DefaultResource) GetUseApproximateCount() bool {
+	return r.UseApproximateCount
 }

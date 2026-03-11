@@ -412,3 +412,5 @@ func (m *MockResource) HasPermission(operation string, role string) bool {
 func (m *MockResource) GetFormLayout() *resource.FormLayout {
 	return nil
 }
+
+func (m *MockResource) GetUseApproximateCount() bool { return false }

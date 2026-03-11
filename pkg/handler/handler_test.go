@@ -287,6 +287,8 @@ func (m *MockResource) GetFormFields() []string {
 	return args.Get(0).([]string)
 }
 
+func (m *MockResource) GetUseApproximateCount() bool { return false }
+
 // Mock DTO provider for testing
 type MockDTOProvider struct {
 	mock.Mock
